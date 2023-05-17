@@ -6,9 +6,10 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///modules.sqlite3'  # Use any database URI here
 db = SQLAlchemy(app)
 
-class modules(db.Model):
+class modules1(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
+    password = db.Column(db.String(10))
 
 
 with app.app_context():
@@ -39,7 +40,7 @@ def reset_module(module_id):
 #GET-smi/modules ==> get a list of all modules in e4s backplane
 @app.route('/smi/modules', methods=['GET'])
 def get_modules():
-    all_modules = modules.query.all()
+    all_modules = modules1.query.all()
     item_list = []
     for item in all_modules:
         item_list.append(item.name)
@@ -49,7 +50,7 @@ def get_modules():
 #GET /smi/modules/{module_id} - Get information about a specific module identified by its ID 
 @app.route('/smi/modules/<int:module_id>', methods=['GET'])
 def get_module_info(module_id):
-    item = modules.query.get(module_id)
+    item = modules1.query.get(module_id)
     if item:
         return jsonify({
             'id': item.id,
@@ -63,9 +64,21 @@ def get_module_info(module_id):
 #GET /smi/modules/{module_id}/settings - Get the current settings for a specific module
 @app.route('/smi/modules/<int:module_id>/settings', methods=['GET'])
 def get_module_settings(module_id):
-    item = modules.query.get(module_id)
+    item = modules1.query.get(module_id)
     if item:
         return jsonify({'message': f'Settings of module {module_id}'})
+    else:
+        return jsonify({'message': 'Module not found'})
+    
+@app.route('/smi/auth/<int:module_id>/<string:password>', methods=['GET'])
+def auth(module_id, password):
+    item = modules1.query.get(module_id)
+    if item:
+        module_pass = item.password
+        if module_pass == password:
+            return jsonify({'message': f'Authentication of module {module_id} successful.'})
+        else:
+            return jsonify({'message': f'Authenication failed.'})
     else:
         return jsonify({'message': 'Module not found'})
 
@@ -73,7 +86,7 @@ def get_module_settings(module_id):
 #PUT /smi/modules/{module_id}/settings - Update the settings for a specific module 
 @app.route('/smi/modules/<int:module_id>/settings', methods=['PUT'])
 def update_module_settings(module_id):
-    item = modules.query.get(module_id)
+    item = modules1.query.get(module_id)
     if item:
         return jsonify({'message': f'Settings of module {module_id} updated'})
     else:
@@ -82,7 +95,7 @@ def update_module_settings(module_id):
 #POST /smi/watchdog/{module_id} - Check the status of the watchdog for a specific module 
 @app.route('/smi/watchdog/<int:module_id>', methods=['GET'])
 def watchdog_module(module_id):
-    item = modules.query.get(module_id)
+    item = modules1.query.get(module_id)
     if item:
         return jsonify({'message': f'Status of watchdog of module {module_id}'})
     else:
@@ -92,7 +105,7 @@ def watchdog_module(module_id):
 #POST /smi/housekeeping/power/<module_id> - Control the power supply of the E4S platform modules
 @app.route('/smi/housekeeping/power/on/<int:module_id>', methods = ['POST'])
 def housekeeping_power_on(module_id):
-    item = modules.query.get(module_id)
+    item = modules1.query.get(module_id)
     if item:
         #data = request.get_json()
         return jsonify({'message': f'Module {module_id} on'})
@@ -101,7 +114,7 @@ def housekeeping_power_on(module_id):
     
 @app.route('/smi/housekeeping/power/off/<int:module_id>', methods = ['POST'])
 def housekeeping_power_off(module_id):
-    item = modules.query.get(module_id)
+    item = modules1.query.get(module_id)
     if item:
         #data = request.get_json()
         return jsonify({'message': f'Module {module_id} off'})
@@ -124,7 +137,7 @@ def housekeeping_other():
 @app.route('/smi/modules', methods=['POST'])
 def create_module():
     data = request.get_json()
-    newmodule = modules(name=data['name'])  
+    newmodule = modules1(name=data['name'], password=data['password'])  
     db.session.add(newmodule)
     db.session.commit()
     return jsonify({'message': 'Module created successfully'})
@@ -133,7 +146,7 @@ def create_module():
 #GET /smi/modules/{module_id} - Delete a specific module identified by its ID
 @app.route('/smi/modules/<int:module_id>', methods=['DELETE'])
 def delete_module(module_id):
-    module = modules.query.get(module_id)
+    module = modules1.query.get(module_id)
     if module:
         db.session.delete(module)
         db.session.commit()
@@ -146,8 +159,9 @@ def delete_module(module_id):
 @app.route('/smi/modules/<int:module_id>', methods=['PUT'])
 def update_module(module_id):
     data = request.get_json()
-    item = modules.query.get(module_id)
+    item = modules1.query.get(module_id)
     item.name = data['name'] 
+    item.password = data['password']
     db.session.commit()
     return jsonify({'message': 'Module updated successfully'})
 

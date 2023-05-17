@@ -76,7 +76,12 @@ elif args.command == 'set':
 elif args.command == 'auth':
     print('Authentication activated for Module ' + str(args.id))
     password = getpass.getpass('Enter password : ')
-    print('Authentication successful for Module ' + str(args.id) + ' with username ' + username + ' and password ' + password)
+    api_url = 'http://127.0.0.1:5000/smi/auth/{}/{}'.format(args.id, password)
+    response = requests.get(api_url)
+    if response.status_code == 200:
+        data = response.json()
+        print(data['message'])
+    
 
 elif args.command == 'power':
     if args.switch == 'on':

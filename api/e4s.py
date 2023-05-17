@@ -165,9 +165,13 @@ def update_module(module_id):
     db.session.commit()
     return jsonify({'message': 'Module updated successfully'})
 
-@app.route('/smi/alerts/<string:alert>', methods=['POST'])
-def alerts(alert):
-    return jsonify({'message': f'Alert notification {alert} sent'})
+@app.route('/smi/alerts/<int:module_id>', methods=['POST'])
+def alerts(module_id):
+    return jsonify({'message': f'Alert notification activated for Module {module_id}'})
+
+@app.route('/smi/alerts')
+def alert_all():
+    return jsonify({'message' : 'Alert notification activated for all Modules'})
 
 
 if __name__ == "__main__":

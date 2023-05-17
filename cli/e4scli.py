@@ -29,7 +29,7 @@ power.add_argument('switch', help='Switch to control power supply of E4S platfor
 power.add_argument('id', help='ID is Module ID', type=int)
 #housekeeping.add_argument('function', help='Housekeeping function that is to be controlled on E4S platform', type=str)
 watchdog.add_argument('id', help='ID is Module ID', type=int)
-alert.add_argument('message', help='Alert notification message to be sent to compute module', type=str)
+alert.add_argument('--id', help='ID is Module ID', type=int)
 
 args: argparse.Namespace = parser.parse_args()
 
@@ -113,8 +113,14 @@ elif args.command == 'watchdog':
         print(data['message'])
 
 elif args.command == 'alert':
-    api_url = 'http://127.0.0.1:5000/smi/alerts/{}'.format(args.message)
-    response = requests.post(api_url)
-    if response.status_code == 200:
-        data = response.json()
-        print(data['message'])
+    if args.id:
+        api_url = 'http://127.0.0.1:5000/smi/alerts/{}'.format(args.id)
+        response = requests.post(api_url)
+        if response.status_code == 200:
+            data = response.json()
+            print(data['message'])
+    else:
+        response = requests.get('http://127.0.0.1:5000/smi/alerts')
+        if response.status_code == 200:
+            data = response.json()
+            print(data['message'])
